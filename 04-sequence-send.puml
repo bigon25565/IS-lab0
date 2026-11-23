@@ -1,0 +1,39 @@
+@startuml sequence_send
+autonumber
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+actor "Пользователь" as User
+participant ":ChatView" as View
+participant ":ChatService" as Svc
+participant ":SocketClient" as WS
+participant "Сервер чата" as Srv
+participant ":ChatWidget" as W
+
+User -> View : ввёл текст, нажал «Отправить»
+View -> Svc : sendMessage(text)
+Svc -> Svc : Message(clientId, status = pending)
+Svc -> View : addMessage(message)
+View --> User : сообщение со статусом «отправляется»
+Svc -> WS : send(message)
+WS -> Srv : отправка по WebSocket
+
+alt Ответ получен
+  Srv --> WS : ack(clientId, id)
+  WS --> Svc : onAck(clientId)
+  Svc -> View : updateStatus(clientId, sent)
+  View --> User : статус «отправлено»
+  Svc -> W : emit('chat-message-sent')
+else Соединение потеряно / таймаут
+  Svc -> View : updateStatus(clientId, failed)
+  View --> User : «Не отправлено», кнопка «Повторить»
+end
+
+opt Входящее сообщение от собеседника
+  Srv -> WS : message
+  WS -> Svc : onMessage(message)
+  Svc -> View : addMessage(message)
+  Svc -> W : emit('chat-message')
+end
+@enduml

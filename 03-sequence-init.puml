@@ -1,0 +1,41 @@
+@startuml sequence_init
+autonumber
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+participant "Хост-страница" as Host
+participant ":ChatWidget" as W
+participant ":ChatView" as View
+participant ":ChatService" as Svc
+participant ":ApiClient" as API
+participant ":SocketClient" as WS
+participant "Сервер чата" as Srv
+
+Host -> W : создан элемент chat-widget\n(api-url, token)
+activate W
+W -> W : attachShadow({mode:'open'})
+W -> W : connectedCallback()\nчтение атрибутов
+W -> View : new ChatView(shadowRoot)
+W -> Svc : init(apiUrl, token)
+
+Svc -> API : getMessages()
+API -> Srv : GET /messages (token)
+
+alt Токен принят
+  Srv --> API : Message[]
+  API --> Svc : Message[]
+  Svc -> View : render(messages)
+  Svc -> WS : connect(token)
+  WS -> Srv : WebSocket-подключение
+  Srv --> WS : соединение открыто
+  WS --> Svc : onOpen()
+  Svc -> View : setConnectionState(true)
+  W --> Host : событие 'chat-ready'
+else Токен не принят (401)
+  Srv --> API : 401 Unauthorized
+  API --> Svc : ошибка
+  W --> Host : событие 'chat-error'
+end
+deactivate W
+@enduml

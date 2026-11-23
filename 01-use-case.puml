@@ -1,0 +1,44 @@
+@startuml use_case
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+
+actor "Разработчик-\nинтегратор" as Dev
+actor "Пользователь" as User
+actor "Сервер чата\n(REST + WebSocket)" as Server
+
+rectangle "Веб-компонент мессенджера <chat-widget>" {
+  usecase "Подключить компонент\nк странице" as UC1
+  usecase "Настроить компонент\nчерез атрибуты" as UC2
+  usecase "Изменить оформление\n(CSS-переменные)" as UC3
+  usecase "Обрабатывать события\nкомпонента" as UC4
+  usecase "Авторизоваться\nпо токену" as UC5
+  usecase "Просмотреть\nисторию сообщений" as UC6
+  usecase "Отправить сообщение" as UC7
+  usecase "Получить сообщение\nв реальном времени" as UC8
+  usecase "Повторить отправку\nпри ошибке" as UC9
+  usecase "Восстановить соединение\nавтоматически" as UC10
+}
+
+Dev --> UC1
+Dev --> UC2
+Dev --> UC4
+User --> UC6
+User --> UC7
+User --> UC8
+
+UC1 ..> UC2 : <<include>>
+UC3 ..> UC2 : <<extend>>
+UC7 ..> UC5 : <<include>>
+UC6 ..> UC5 : <<include>>
+UC9 ..> UC7 : <<extend>>
+UC8 ..> UC10 : <<include>>
+
+UC5 --> Server
+UC6 --> Server
+UC7 --> Server
+UC8 --> Server
+UC10 --> Server
+@enduml

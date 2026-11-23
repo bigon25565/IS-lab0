@@ -1,0 +1,123 @@
+@startuml classes
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+
+class HTMLElement <<браузер>>
+
+class ChatWidget {
+  - shadow : ShadowRoot
+  - view : ChatView
+  - service : ChatService
+  + apiUrl : string
+  + token : string
+  + theme : string
+  + connectedCallback() : void
+  + disconnectedCallback() : void
+  + attributeChangedCallback(name, old, value) : void
+  + sendMessage(text : string) : void
+  + emit(name : string, data : any) : void
+}
+
+class ChatView {
+  - root : ShadowRoot
+  - messageList : HTMLElement
+  - input : HTMLTextAreaElement
+  + render(messages : Message[]) : void
+  + addMessage(m : Message) : void
+  + updateStatus(clientId : string, status : MessageStatus) : void
+  + setConnectionState(isOnline : boolean) : void
+  + onSendClick(handler : Function) : void
+}
+
+class ChatService {
+  - messages : Message[]
+  - api : ApiClient
+  - socket : SocketClient
+  + init(apiUrl : string, token : string) : void
+  + loadHistory() : void
+  + sendMessage(text : string) : void
+  + onMessage(m : Message) : void
+  + onAck(clientId : string) : void
+  + retry(clientId : string) : void
+}
+
+class ApiClient {
+  - baseUrl : string
+  - token : string
+  + getDialog() : Dialog
+  + getMessages() : Message[]
+  + postMessage(m : Message) : Message
+}
+
+class SocketClient {
+  - socket : WebSocket
+  - attempts : number
+  + isConnected : boolean
+  + connect(token : string) : void
+  + send(m : Message) : void
+  + reconnect() : void
+  + close() : void
+  + onMessage(handler : Function) : void
+}
+
+class Dialog {
+  + id : string
+  + title : string
+}
+
+class Message {
+  + clientId : string
+  + id : string
+  + text : string
+  + authorId : string
+  + createdAt : Date
+  + status : MessageStatus
+}
+
+class User {
+  + id : string
+  + name : string
+  + avatarUrl : string
+}
+
+enum MessageStatus {
+  pending
+  sent
+  failed
+}
+
+HTMLElement <|-- ChatWidget
+ChatWidget *-- ChatView
+ChatWidget *-- ChatService
+ChatView ..> ChatService : обработчики UI
+ChatView ..> Message : отображает
+ChatService *-- ApiClient
+ChatService *-- SocketClient
+ChatService "1" o-- "0..*" Message
+ChatService --> Dialog
+SocketClient ..> ChatService : onMessage / onAck
+Dialog "1" *-- "0..*" Message
+Message --> User : автор
+Message --> MessageStatus
+
+note right of ChatWidget
+  Публичный интерфейс компонента:
+  атрибуты — настройка,
+  методы — управление,
+  CustomEvent — связь с хост-приложением.
+  Разметка и стили скрыты в Shadow DOM.
+end note
+
+note bottom of SocketClient
+  Отвечает за соединение и повторные
+  подключения с увеличивающейся паузой.
+end note
+ChatService --> ChatView : обновляет
+SocketClient : + onStateChange(handler : Function) : void
+ChatView : + onRetryClick(handler : Function) : void
+ChatView : + destroy() : void
+ChatService : + destroy() : void
+@enduml

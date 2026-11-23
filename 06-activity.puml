@@ -1,0 +1,37 @@
+@startuml activity
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Пользователь|
+start
+:Ввести текст сообщения;
+:Нажать «Отправить»;
+
+|Веб-компонент|
+:Прочитать текст из поля ввода;
+if (Текст не пустой?) then (нет)
+  :Показать подсказку\n«Введите сообщение»;
+  stop
+else (да)
+endif
+:Создать сообщение\n(clientId, status = pending);
+:Добавить сообщение в список\nи очистить поле ввода;
+if (Соединение активно?) then (нет)
+  :status = failed;
+  :Показать «Не отправлено»\nи кнопку «Повторить»;
+  stop
+else (да)
+endif
+:Отправить сообщение по WebSocket;
+if (Подтверждение получено?) then (да)
+  :Присвоить серверный id,\nstatus = sent;
+  :Показать статус «отправлено»;
+  :Сгенерировать событие\n'chat-message-sent';
+  stop
+else (нет)
+  :status = failed;
+  :Показать «Не отправлено»\nи кнопку «Повторить»;
+  stop
+endif
+@enduml

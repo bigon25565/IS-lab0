@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Демо chat-widget</title></head>
+<body>
+  <h1>Хост-приложение</h1>
+
+  <chat-widget
+    api-url="http://localhost:8000/api"
+    token="demo-token"
+    style="--chat-accent: #16a34a; max-width: 480px;">
+  </chat-widget>
+
+  <script type="module" src="./dist/index.js"></script>
+  <script type="module">
+    const widget = document.querySelector('chat-widget');
+    widget.addEventListener('chat-ready', () => console.log('Компонент готов'));
+    widget.addEventListener('chat-message-sent', (e) => console.log('Отправлено', e.detail));
+    widget.addEventListener('chat-error', (e) => console.error('Ошибка', e.detail));
+  </script>
+</body>
+</html>

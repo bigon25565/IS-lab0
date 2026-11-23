@@ -1,0 +1,35 @@
+@startuml state
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+hide empty description
+
+state "Не подключён" as Detached
+state "Инициализация" as Init
+state "Онлайн" as Online
+state "Переподключение" as Reconnect
+state "Нет соединения" as Offline
+state "Ошибка" as Error
+
+[*] --> Detached : страница загружена
+Detached --> Init : connectedCallback()
+Init --> Online : история загружена,\nсокет открыт / emit 'chat-ready'
+Init --> Error : ошибка сети или 401
+Online : do / приём и отправка сообщений
+Online --> Online : получено сообщение / добавить в список
+Online --> Reconnect : соединение закрыто
+Reconnect : do / пауза и повторная попытка подключения
+Reconnect --> Online : подключено
+Reconnect --> Offline : попытки исчерпаны
+Offline --> Reconnect : сеть появилась\nили нажата кнопка «Повторить»
+Online --> Detached : disconnectedCallback()\n/ закрыть сокет, снять обработчики
+Error --> Init : повторная инициализация
+Detached --> [*]
+
+note right of Detached
+  При удалении элемента из DOM
+  соединение закрывается —
+  компонент не оставляет
+  «висящих» сокетов и таймеров.
+end note
+@enduml
